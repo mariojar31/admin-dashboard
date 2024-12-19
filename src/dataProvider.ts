@@ -1,16 +1,53 @@
-import { fetchUtils, DataProvider, GetListParams, GetListResult, CreateParams, UpdateParams, DeleteParams, GetOneParams, GetManyParams, GetManyReferenceParams } from 'react-admin';
+import { CreateParams, DataProvider, DeleteParams, GetListParams, GetListResult, GetManyParams, GetManyReferenceParams, GetOneParams, UpdateParams } from 'react-admin';
 
 // Definimos el dataProvider con los tipos correspondientes
 const dataProvider: DataProvider = {
   // Implementación de getList
-  getList: (resource: string, params: GetListParams): Promise<GetListResult<any>> => {
-    const url = 'https://zqhjmvkwwwiufcwphsnkdwnw4u0njdnb.lambda-url.us-east-1.on.aws/';
-    
-    return fetchUtils.fetchJson(url).then(({ json }) => ({
-      data: json.users,   // Asegúrate de extraer los datos correctos del JSON
-      total: json.users.length,  // Aquí también puedes hacer un cálculo más preciso del total
-    }));
-  },
+  getList: async (resource: string, params: GetListParams): Promise<GetListResult<any>> => {
+    const url = 'https://s2ejysktvq2du4jht6tuabdrim0kcgpe.lambda-url.us-east-1.on.aws/';
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const json = await response.json();
+        console.log('Datos recibidos:', json);
+        
+
+        // Construye y devuelve el resultado en el formato esperado
+        return {
+            data: json.users.map((user: any) => ({
+                id: user.Username,
+                email: user.Attributes.email,
+                status: user.UserStatus,
+                enabled: user.Enabled,
+                emailstatus: user.email_verified,
+                userCreate: user.UserCreateDate,
+                userModify: user.UserLastModifiedDate
+            })),
+            total: json.users.length,
+        };
+    } catch (error) {
+        console.error('Error en fetch directo:', error);
+
+        // Devuelve un resultado vacío o lanza un error para que `react-admin` lo maneje
+        return {
+            data: [],
+            total: 0,
+        };
+    }
+},
+  
+   
+
 
   // Implementación de getOne
   getOne: (resource: string, params: GetOneParams): Promise<any> => {
@@ -62,3 +99,4 @@ const dataProvider: DataProvider = {
 };
 
 export { dataProvider };
+

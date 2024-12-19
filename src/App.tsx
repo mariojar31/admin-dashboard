@@ -1,64 +1,59 @@
+import React from "react";
 import {
   Admin,
-  Resource,
-  ListGuesser,
-  EditGuesser,
-  ShowGuesser,
-  List,
-  Datagrid,
-  TextField,
-  EmailField,
   BooleanField,
-  DateField
+  Button,
+  Datagrid,
+  DateField,
+  List,
+  Resource,
+  TextField,
+  useRecordContext
 } from "react-admin";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "./Layout";
-import { dataProvider } from "./dataProvider";
 import { authProvider } from "./authProvider";
-// import UserList from "./users/UserList";
-// import UserShow from "./users/UserShow";
+// import AdminDashboard from "./components/AdminDashboard";
+import { dataProvider } from "./dataProvider";
+import UserShow from "./users/UserShow";
+import VideoAnalytics from "./videos_analytics/VideoAnalitycs";
 
-export const App = () => (
-  <Admin
-    layout={Layout}
-    dataProvider={dataProvider}
-    authProvider={authProvider}
-  >
-    <Resource
-      name="users"
-      list={()=>(
-        <List>
-          <Datagrid>
-            {/* ID del usuario */}
-            <TextField source="Username" label="ID" />
-            
-            {/* Accediendo a los atributos del usuario */}
-            <TextField
-              source="Attributes[0].Value" // Este es el 'email'
-              label="Email"
-            />
-            <BooleanField
-              source="Enabled"
-              label="Habilitado"
-            />
-            <TextField
-              source="UserStatus"
-              label="Estado del Usuario"
-            />
+export const App = () => {
+  // Botón personalizado para "Ver Usuarios"
+  const ViewUsersButton: React.FC = () => {
+    const record = useRecordContext(); // Obtiene el registro actual
+    const navigate = useNavigate(); // Navegación programática
 
-            {/* Fechas de creación y modificación del usuario */}
-            <DateField
-              source="UserCreateDate"
-              label="Fecha de Creación"
-              showTime // Muestra la hora también
-            />
-            <DateField
-              source="UserLastModifiedDate"
-              label="Última Modificación"
-              showTime
-            />
-          </Datagrid>
-        </List>
-      )}
-    />
-  </Admin>
-);
+    if (!record) return null; // Si no hay un registro, no renderiza el botón
+
+    const handleClick = () => {
+      // Navega a la lista de usuarios filtrada por el ID del video
+      navigate(`/users?filter={"videoId":"${record.id}"}`);
+    };
+
+    return <Button label="Ver Usuarios" onClick={handleClick} />;
+  };
+
+  return (
+    <Admin
+      layout={Layout}
+      dataProvider={dataProvider}
+      authProvider={authProvider}
+    >
+      {/* Recurso de Usuarios */}
+      <Resource
+        name="users"
+        list={ UserShow}
+      />
+
+      {/* Recurso de Videos */}
+      <Resource
+        name="video_analytics"
+        list={ VideoAnalytics }
+      />
+    </Admin>
+  );
+
+
+};
+
