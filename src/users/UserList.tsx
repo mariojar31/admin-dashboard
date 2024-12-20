@@ -1,37 +1,36 @@
+import { List, Datagrid, TextField, BooleanField, DateField, Filter, TextInput, Pagination, FilterProps, ListActions, SearchInput } from 'react-admin';
 
-import { List, Datagrid, TextField, BooleanField, DateField, Filter, TextInput, FilterProps } from "react-admin";
+// Filtro para buscar por email
+const userFilter = [
+    <TextInput label="Email" source="email" alwaysOn/>
 
-const UserFilter = (props:FilterProps) => (
-    <Filter {...props}>
-      <TextInput label="Buscar por Nombre de Usuario" source="Username" alwaysOn />
-      <TextInput label="Buscar por Email" source="Attributes[0].Value" />
-    </Filter>
-  );
+];
 
-export default function UserList(){
-
+export default function UserList() {
   return (
-  /* Lista de usuarios */
-  /* Esta lista muestra los datos de cada usuario */
-  /* Se utiliza Datagrid para organizar y mostrar los datos */
-  /* Se utilizan TextField para mostrar los atributos del usuario */
+    <List
+      filters={userFilter} // Filtros
+      pagination={<Pagination />} // Paginación
+      perPage={10} // Establecemos el número de elementos por página
+      actions={<ListActions hasCreate />}
+    >
+      <Datagrid>
+        {/* ID del usuario */}
+        <TextField source="id" label="ID" />
 
-    <List filter={UserFilter}>
-    <Datagrid>
-      {/* ID del usuario */}
-      <TextField source="id" label="ID" />
+        {/* Email */}
+        <TextField source="email" label="Email" />
 
-      {/* Accediendo a los atributos del usuario */}
-      <TextField source="email" label="Email" />
-      <BooleanField source="enabled" label="Habilitado" />
-      <TextField source="status" label="Estado del Usuario" />
+        {/* Estado de habilitación */}
+        <BooleanField source="enabled" label="Habilitado" />
 
-      {/* Fechas de creación y modificación del usuario */}
-      <DateField source="userCreate" label="Fecha de Creación" showTime />
-      <DateField source="userModify" label="Última Modificación" showTime />
-    </Datagrid>
-  </List>
-)
+        {/* Estado del usuario */}
+        <TextField source="status" label="Estado del Usuario" />
+
+        {/* Fechas de creación y modificación */}
+        <DateField source="userCreate" label="Fecha de Creación" showTime />
+        <DateField source="userModify" label="Última Modificación" showTime />
+      </Datagrid>
+    </List>
+  );
 }
-
-        
