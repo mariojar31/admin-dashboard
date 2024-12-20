@@ -9,7 +9,10 @@ import { authProvider } from "./authProvider";
 // import AdminDashboard from "./components/AdminDashboard";
 import { dataProvider } from "./dataProvider";
 import UserList from "./users/UserList";
-import VideoAnalytics from "./videos_analytics/VideoAnalitycs";
+import Videos from "./videos/Videos";
+import {VideoFileRounded, People} from '@mui/icons-material';
+
+
 
 export const App = () => {
 
@@ -24,15 +27,26 @@ export const App = () => {
       <Resource
         name="users"
         list={ UserList}
+        icon={People}
         
       />
 
       {/* Recurso de Videos */}
       <Resource
-        name="video_analytics"
-        list={ VideoAnalytics }
+        name="videos"
+        list={ Videos }
+        icon={VideoFileRounded}
       />
+
+      {/* Recurso de Videos */}
+      {/* <Resource
+        name="organizations"
+        list={ VideoAnalytics }
+        icon={VideoFileRounded}
+      /> */}
     </Admin>
+
+    
   );
 
 

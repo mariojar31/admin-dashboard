@@ -1,6 +1,6 @@
 import { CreateParams, DataProvider, DeleteParams, GetListParams, GetListResult, GetManyParams, GetManyReferenceParams, GetOneParams, UpdateParams } from 'react-admin';
 
-// Definimos la estructura de un usuario para TypeScript
+
 interface User {
   Username: string;
   Attributes: {
@@ -14,13 +14,42 @@ interface User {
   email_verified: boolean;
 }
 
+interface Mp4Source {
+  bucket: string;
+  key: string;
+}
+
+interface VideoMetadata {
+  duration_ms: string; // En milisegundos como string
+  mp4_source_subtitled: Mp4Source;
+  thumbnail: string; // URL del thumbnail
+  transcriptedText: string; // Texto transcrito
+  keywords: string[]; // Lista de palabras clave
+  subtitled: boolean; // Indica si está subtitulado
+  mp4_source: Mp4Source; // Información sobre el MP4 fuente
+  summarize: string; // Resumen del video
+  normalized_title: string; // Título normalizado (para búsqueda)
+  title: string; // Título del video
+  url: string; // URL del video (por ejemplo, archivo m3u8)
+}
+
+interface Video {
+  metadata: VideoMetadata; // Metadatos del video
+  filename: string; // Nombre del archivo
+  visible: boolean; // Si es visible
+  flag: string; // Flag asociado (ej., "clipped")
+  category_id: string; // ID de la categoría
+  org: string; // Organización asociada
+  created_at: string; // Fecha y hora de creación en formato string
+}
+
 const dataProvider: DataProvider = {
   // Implementación de getList
   getList: async (resource: string, params: GetListParams): Promise<GetListResult<any>> => {
     const { filter = {}, sort = { field: 'id', order: 'ASC' }, pagination = { page: 1, perPage: 10 } } = params;
 
     if (resource === 'users') {
-      const url = 'https://ckveuqgakprpw57axbcqbixz7m0zmxdj.lambda-url.us-east-1.on.aws/';
+      const url = 'https://7od2hicvo46zsegg4vcd2lb4ga0tgyov.lambda-url.us-east-1.on.aws/';
 
       try {
         // Construir parámetros de búsqueda desde los filtros
@@ -45,12 +74,7 @@ const dataProvider: DataProvider = {
         filterParams.set('_order', sort.order);
 
         // Solicitar los datos de la API
-        const response = await fetch(`${url}?${filterParams.toString()}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await fetch(`${url}?${filterParams.toString()}`);
 
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
@@ -84,48 +108,58 @@ const dataProvider: DataProvider = {
           total: 0,
         };
       }
-    }else if(resource=='video_analytics'){
-
-      const urlVideos = 'https://4d4q5yca6qhm5zr4p7db55pvee0xbujg.lambda-url.us-east-1.on.aws/';
-
+    }else if (resource === 'videos') {
+      const urlVideos = 'https://2gp7ppvfbtukvnrjkwga3gbkt40qkkyw.lambda-url.us-east-1.on.aws/';
+    
       try {
         // Construir parámetros de búsqueda desde los filtros
         const filterParams = new URLSearchParams();
-        
-  
-        // Agregar los parámetros de paginación
-        filterParams.set('_start', ((pagination.page - 1) * pagination.perPage).toString());
-        filterParams.set('_end', (pagination.page * pagination.perPage).toString());
-
-        // Agregar los parámetros de orden
-        filterParams.set('_sort', sort.field);
-        filterParams.set('_order', sort.order);
-
+    
+        // Agregar los parámetros de paginación si están disponibles
+        if (pagination) {
+          filterParams.set('_start', ((pagination.page - 1) * pagination.perPage).toString());
+          filterParams.set('_end', (pagination.page * pagination.perPage).toString());
+        }
+    
+        // Agregar los parámetros de orden si están disponibles
+        if (sort) {
+          filterParams.set('_sort', sort.field);
+          filterParams.set('_order', sort.order);
+        }
+    
         // Solicitar los datos de la API
-        const response = await fetch(`${urlVideos}?${filterParams.toString()}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
+        const response = await fetch(`${urlVideos}?${filterParams.toString()}`);
+    
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
         }
-        console.log("Response: ",response)
+    
         const json = await response.json();
         console.log('Datos recibidos:', json);
-
-        // Asegúrate de que la API devuelva el total de registros
-        // const total = json.total || json.users.length;  // Asegúrate de que tu API devuelva "total" o usa la longitud de usuarios
-
+    
+        // Asegúrate de que la API devuelva el total de registros, o usa la longitud de los resultados
+        const total = json.total || json.videos.length;  // Asegúrate de que tu API devuelva "total" o usa la longitud de los videos
+    
+        // Mapeo de los videos con validaciones para asegurarse de que todos los campos necesarios existen
+        const data = json.videos.map((video: any) => {
+          return {
+            id: video.filename,  // Asignamos el 'filename' como id único
+            title: video.metadata?.title || 'Título no disponible',  // Validamos que 'metadata' y 'title' existan
+            description: video.metadata?.summarize || 'Descripción no disponible',  // Validamos que 'summarize' exista
+            visible: video.visible,
+            createdAt: video.created_at,
+            organizationName: video.org,
+          };
+        });
+    
         // Devuelve los datos y el total esperado por React Admin
         return {
-          data: json 
+          data,
+          total,  // Total de elementos, necesario para la paginación
         };
       } catch (error) {
         console.error('Error en fetch directo:', error);
-
+    
         // Devuelve un resultado vacío si ocurre un error
         return {
           data: [],
@@ -133,6 +167,8 @@ const dataProvider: DataProvider = {
         };
       }
     }
+    
+    
 
     // Si no es "users", podemos añadir otras condiciones o devolver datos vacíos
     return {
@@ -144,7 +180,7 @@ const dataProvider: DataProvider = {
   // Otros métodos como getOne, getMany, etc., se dejan vacíos si no se están usando por ahora
   getOne: async (resource: string, params: GetOneParams): Promise<any> => {
     if (resource === 'users') {
-      const url = `https://ckveuqgakprpw57axbcqbixz7m0zmxdj.lambda-url.us-east-1.on.aws/${params.id}`;
+      const url = `https://276nn7c64bvya7q3l54kwfg6f40foftd.lambda-url.us-east-1.on.aws/${params.id}`;
 
       const response = await fetch(url);
       const json = await response.json();
